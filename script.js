@@ -1,85 +1,72 @@
-const morseTable = {
-  'A': '.-',     'B': '-...',   'C': '-.-.',   'D': '-..',
-  'E': '.',      'F': '..-.',   'G': '--.',    'H': '....',
-  'I': '..',     'J': '.---',   'K': '-.-',    'L': '.-..',
-  'M': '--',     'N': '-.',     'O': '---',    'P': '.--.',
-  'Q': '--.-',   'R': '.-.',    'S': '...',    'T': '-',
-  'U': '..-',    'V': '...-',   'W': '.--',    'X': '-..-',
-  'Y': '-.--',   'Z': '--..',
-  '0': '-----',  '1': '.----',  '2': '..---',  '3': '...--',
-  '4': '....-',  '5': '.....',  '6': '-....',  '7': '--...',
-  '8': '---..',  '9': '----.',
-  ' ': '/',      '.': '.-.-.-', ',': '--..--'
+// ===== ЗБЕРЕЖЕННЯ СИСТЕМНОЇ ІНФОРМАЦІЇ =====
+const systemInfo = {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language
 };
 
-function caesarCipher(str, shift) {
-  return str.split('').map(char => {
-    const code = char.charCodeAt(0);
-    if (code >= 65 && code <= 90) {
-      return String.fromCharCode((code - 65 + shift + 26) % 26 + 65);
-    } else if (code >= 97 && code <= 122) {
-      return String.fromCharCode((code - 97 + shift + 26) % 26 + 97);
-    } else {
-      return char;
-    }
-  }).join('');
+localStorage.setItem('systemInfo', JSON.stringify(systemInfo));
+
+// ===== ПІСЛЯ ЗАВАНТАЖЕННЯ СТОРІНКИ =====
+window.addEventListener('DOMContentLoaded', () => {
+    // Показати системну інформацію у футері
+    const footer = document.createElement('footer');
+    const data = JSON.parse(localStorage.getItem('systemInfo'));
+    footer.innerHTML = `
+        <p>Браузер: ${data.userAgent}</p>
+        <p>Платформа: ${data.platform}</p>
+        <p>Мова: ${data.language}</p>
+    `;
+    document.body.appendChild(footer);
+
+    // Завантажити коментарі
+    const variantNumber = 2; // Замінити на свій номер
+    fetch(`https://jsonplaceholder.typicode.com/posts/${variantNumber}/comments`)
+        .then(res => res.json())
+        .then(comments => {
+            const section = document.createElement('section');
+            section.innerHTML = `<h2>Коментарі роботодавців</h2>`;
+            comments.forEach(comment => {
+                const div = document.createElement('div');
+                div.innerHTML = `<strong>${comment.name}</strong>: ${comment.body}`;
+                section.appendChild(div);
+            });
+            document.body.appendChild(section);
+        });
+
+    // Показати модальне вікно через 60 сек
+    setTimeout(() => {
+        const modal = document.getElementById('modal');
+        if (modal) modal.style.display = 'flex';
+    }, 60000);
+});
+
+// ===== ТЕМА: Автоматична та ручна =====
+function getTimeBasedTheme() {
+    const hour = new Date().getHours();
+    return (hour >= 7 && hour < 21) ? 'light' : 'dark';
 }
 
-function toMorse(text) {
-  return text.toUpperCase().split('').map(char =>
-    morseTable[char] || '?'
-  ).join(' ');
+function setTheme(theme) {
+    document.body.className = theme;
+    localStorage.setItem('theme', theme);
 }
 
-function fromMorse(morseCode) {
-  const reverseMorse = Object.fromEntries(
-    Object.entries(morseTable).map(([k, v]) => [v, k])
-  );
-  return morseCode.split(' ').map(symbol =>
-    reverseMorse[symbol] || '?'
-  ).join('');
+// Ініціалізація теми
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+    setTheme(savedTheme);
+} else {
+    const autoTheme = getTimeBasedTheme();
+    setTheme(autoTheme);
 }
 
-function encrypt() {
-  const method = document.getElementById("method").value;
-  const text = document.getElementById("inputText").value;
-  const shift = parseInt(document.getElementById("shift").value);
-  let result = "";
-
-  if (method === "caesar") {
-    result = caesarCipher(text, shift);
-  } else if (method === "morse") {
-    result = toMorse(text);
-  } else if (method === "base64") {
-    result = btoa(text);
-  }
-
-  document.getElementById("resultText").value = result;
-}
-
-function decrypt() {
-  const method = document.getElementById("method").value;
-  const text = document.getElementById("inputText").value;
-  const shift = parseInt(document.getElementById("shift").value);
-  let result = "";
-
-  if (method === "caesar") {
-    result = caesarCipher(text, -shift);
-  } else if (method === "morse") {
-    result = fromMorse(text);
-  } else if (method === "base64") {
-    try {
-      result = atob(text);
-    } catch {
-      result = "⛔ Неправильний Base64";
-    }
-  }
-
-  document.getElementById("resultText").value = result;
-}
-
-function toggleShiftInput() {
-  const method = document.getElementById("method").value;
-  const shiftContainer = document.getElementById("shiftContainer");
-  shiftContainer.style.display = method === "caesar" ? "block" : "none";
+// Перемикач теми
+const themeToggle = document.getElementById('theme-toggle');
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.body.className;
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+    });
 }
