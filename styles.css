@@ -43,7 +43,7 @@ body.light button {
 
 
 body.dark {
-    background-color: #121212;
+    background-color: gray;
     color: white;
 }
 
